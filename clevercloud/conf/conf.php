@@ -7,8 +7,8 @@
 //
 $dolibarr_main_url_root='http://app-7045c4d5-ba79-4fa5-a991-bfc2f969ed3b.cleverapps.io ';
 $dolibarr_main_document_root='/home/bas/app_7045c4d5-ba79-4fa5-a991-bfc2f969ed3b/htdocs';
-//$dolibarr_main_url_root_alt='/custom';
-//$dolibarr_main_document_root_alt='/Users/anthonycaumond/Dev/cybele/dolibarr/htdocs/custom';
+$dolibarr_main_url_root_alt='/custom'
+$dolibarr_main_document_root_alt='/home/bas/app_7045c4d5-ba79-4fa5-a991-bfc2f969ed3b/htdocs/custom';
 $dolibarr_main_data_root='/home/bas/app_7045c4d5-ba79-4fa5-a991-bfc2f969ed3b/documents';
 $dolibarr_main_db_host='bamwv4bnune4xlv6b42i-mysql.services.clever-cloud.com';
 $dolibarr_main_db_port='20366';
