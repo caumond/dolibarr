@@ -1,4 +1,4 @@
-cp conf.php ../../htdocs/conf 
+./hook-setup.sh
 mkdir documents
 tar -C documents -xvzf documents.tgz
 rm -fr ../../documents/*
