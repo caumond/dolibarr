@@ -1,0 +1,10 @@
+# Dolibarr language file - fr_FR - Todoist
+CHARSET=UTF-8
+
+Module577777Name=Todoist (Online)
+Module577777Description=Ajoute un bouton <a href="https://todoist.com" target="_blank">Todoist </a>: Gestionnaire de tâches online, gratuit ou payant, avec clients synchronisés android, IOS ...
+
+# Setup
+todoistSetup=Configuration du module Todoist Online
+todoistURL=URL Todoist Online
+todoistModuleConfigurationNotComplete=La configuration du module Todoist Online est incomplète
