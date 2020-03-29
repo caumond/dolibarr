@@ -5,17 +5,17 @@
 // Take a look at conf.php.example file for an example of conf.php file
 // and explanations for all possibles parameters.
 //
-$dolibarr_main_url_root='http://app-7045c4d5-ba79-4fa5-a991-bfc2f969ed3b.cleverapps.io ';
-$dolibarr_main_document_root='/home/bas/app_7045c4d5-ba79-4fa5-a991-bfc2f969ed3b/htdocs';
+$dolibarr_main_url_root='http://'.getenv("APP_ID").".cleverapps.io ';
+$dolibarr_main_document_root='/home/bas/'.getenv("APP_ID")."/htdocs';
 $dolibarr_main_url_root_alt='/custom';
-$dolibarr_main_document_root_alt='/home/bas/app_7045c4d5-ba79-4fa5-a991-bfc2f969ed3b/htdocs/custom';
-$dolibarr_main_data_root='/home/bas/app_7045c4d5-ba79-4fa5-a991-bfc2f969ed3b/documents';
-$dolibarr_main_db_host='bamwv4bnune4xlv6b42i-mysql.services.clever-cloud.com';
-$dolibarr_main_db_port='20366';
-$dolibarr_main_db_name='bamwv4bnune4xlv6b42i';
+$dolibarr_main_document_root_alt='/home/bas/'.getenv("APP_ID")."/htdocs/custom';
+$dolibarr_main_data_root='/home/bas/".getenv("APP_ID")."/documents';
+$dolibarr_main_db_host=getenv("MYSQL_ADDON_HOST");
+$dolibarr_main_db_port=getenv("MYSQL_ADDON_PORT");
+$dolibarr_main_db_name=getenv("MYSQL_ADDON_DB");
 $dolibarr_main_db_prefix='llx_';
-$dolibarr_main_db_user='uxxmg3fwsr5ymjnr';
-$dolibarr_main_db_pass='2PRkxqhcwUkAiu0cBzFq';
+$dolibarr_main_db_user=getenv("MYSQL_ADDON_USER");
+$dolibarr_main_db_pass=getenv("MYSQL_ADDON_PASSWORD");
 $dolibarr_main_db_type='mysqli';
 $dolibarr_main_db_character_set='utf8';
 $dolibarr_main_db_collation='utf8_general_ci';
