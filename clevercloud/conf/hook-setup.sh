@@ -1,1 +1,1 @@
-cp clevercloud/conf/conf.php htdocs/conf 
+cp ${APP_HOME}/clevercloud/conf/conf.php ${APP_HOME}/htdocs/conf 
