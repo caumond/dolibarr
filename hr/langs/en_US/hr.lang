@@ -1,0 +1,5 @@
+﻿# Dolibarr language file - en_US - timeclock
+CHARSET=UTF-8
+
+Module113030Name=HRM+
+Module113030Desc=Human ressource management
