@@ -836,7 +836,7 @@ if ($num >= 0) {
 		$dataArray[$i]['tooltip_content']	 .= '</tbody></table>';
 		
 		// contenu
-		$thirdpartyCard = (DOL_VERSION < '6.0.0' ? 'soc.php' : 'card.php');
+		$thirdpartyCard = (DOL_VERSION < '6.0.0' ? 'card.php' : 'card.php');
 		if (!empty($obj->code_client)) // pour les prospects le code/ref n'est pas obligatoire
 			$dataArray[$i]['code_client_nom']	 = '<a class="object-link" href="' . DOL_URL_ROOT . '/societe/' . $thirdpartyCard . '?socid=' . $obj->rowid . '" target="_blank">' . $obj->code_client . '</a>' . $prefix . $obj->nom . $suffix;
 		else
