@@ -38,7 +38,7 @@ function opensurvey_prepare_head(Opensurveysondage $object)
 	$head = array();
 
 	$head[0][0] = 'card.php?id='.$object->id_sondage;
-	$head[0][1] = $langs->trans("Card");
+	$head[0][1] = $langs->trans("Survey");
 	$head[0][2] = 'general';
 	$h++;
 
@@ -77,20 +77,18 @@ function llxHeaderSurvey($title, $head = "", $disablejs = 0, $disablehead = 0, $
 
 	//$replacemainarea = (empty($conf->dol_hide_leftmenu) ? '<div>' : '').'<div>';
 
-	top_htmlhead($head, $title, $disablejs, $disablehead, $arrayofjs, $arrayofcss); // Show html headers
+	top_htmlhead($head, $title, $disablejs, $disablehead, $arrayofjs, $arrayofcss, 0, 1); // Show html headers
+
 	print '<body id="mainbody" class="publicnewmemberform">';
-
-
 
 	print '<span id="dolpaymentspan"></span>'."\n";
 	print '<div class="center">'."\n";
-	print '<form name="formulaire" action="studs.php?sondage='.$numsondage.'"'.'#bas" method="POST">'."\n";
+	print '<form name="formulaire" action="studs.php?sondage='.urlencode($numsondage).'#bas" method="POST">'."\n";
 	print '<input type="hidden" name="sondage" value="'.$numsondage.'"/>';
 	print '<input type="hidden" name="token" value="'.newToken().'">'."\n";
 	print "\n";
 
 	// Show logo (search order: logo defined by PAYMENT_LOGO_suffix, then PAYMENT_LOGO, then small company logo, large company logo, theme logo, common logo)
-	$width = 0;
 	// Define logo and logosmall
 	$logosmall = $mysoc->logo_small;
 	$logo = $mysoc->logo;
@@ -102,13 +100,10 @@ function llxHeaderSurvey($title, $head = "", $disablejs = 0, $disablehead = 0, $
 	{
 		$urllogo = DOL_URL_ROOT.'/viewimage.php?modulepart=mycompany&amp;entity='.$conf->entity.'&amp;file='.urlencode('logos/thumbs/'.$logosmall);
 		$urllogofull = $dolibarr_main_url_root.'/viewimage.php?modulepart=mycompany&entity='.$conf->entity.'&file='.urlencode('logos/thumbs/'.$logosmall);
-		$width = 150;
-	}
-	elseif (!empty($logo) && is_readable($conf->mycompany->dir_output.'/logos/'.$logo))
+	} elseif (!empty($logo) && is_readable($conf->mycompany->dir_output.'/logos/'.$logo))
 	{
 		$urllogo = DOL_URL_ROOT.'/viewimage.php?modulepart=mycompany&amp;entity='.$conf->entity.'&amp;file='.urlencode('logos/'.$logo);
 		$urllogofull = $dolibarr_main_url_root.'/viewimage.php?modulepart=mycompany&entity='.$conf->entity.'&file='.urlencode('logos/'.$logo);
-		$width = 150;
 	}
 
 	// Output html code for logo
@@ -117,11 +112,10 @@ function llxHeaderSurvey($title, $head = "", $disablejs = 0, $disablehead = 0, $
 		print '<div class="backgreypublicpayment">';
 		print '<div class="logopublicpayment">';
 		print '<img id="dolpaymentlogo" src="'.$urllogo.'"';
-		if ($width) print ' width="'.$width.'"';
 		print '>';
 		print '</div>';
 		if (empty($conf->global->MAIN_HIDE_POWERED_BY)) {
-			print '<div class="poweredbypublicpayment opacitymedium right"><a href="https://www.dolibarr.org" target="dolibarr">'.$langs->trans("PoweredBy").'<br><img src="'.DOL_URL_ROOT.'/theme/dolibarr_logo.png" width="80px"></a></div>';
+			print '<div class="poweredbypublicpayment opacitymedium right"><a class="poweredbyhref?utm_medium=website&utm_source=poweredby" href="https://www.dolibarr.org" target="dolibarr" rel="noopener">'.$langs->trans("PoweredBy").'<br><img src="'.DOL_URL_ROOT.'/theme/dolibarr_logo.svg" width="80px"></a></div>';
 		}
 		print '</div>';
 	}
@@ -158,11 +152,11 @@ function get_server_name()
 {
 	global $dolibarr_main_url_root;
 
-	$urlwithouturlroot=preg_replace('/'.preg_quote(DOL_URL_ROOT, '/').'$/i', '', trim($dolibarr_main_url_root));
+	$urlwithouturlroot = preg_replace('/'.preg_quote(DOL_URL_ROOT, '/').'$/i', '', trim($dolibarr_main_url_root));
 	//$urlwithroot=$urlwithouturlroot.DOL_URL_ROOT;		// This is to use external domain name found into config file
 	//$urlwithroot=DOL_MAIN_URL_ROOT;					// This is to use same domain name than current
 
-	$url=$urlwithouturlroot.dol_buildpath('/opensurvey/', 1);
+	$url = $urlwithouturlroot.dol_buildpath('/opensurvey/', 1);
 
 	if (!preg_match("|/$|", $url)) {
 		$url = $url."/";
@@ -217,8 +211,8 @@ function dol_survey_random($car)
 {
 	$string = "";
 	$chaine = "abcdefghijklmnopqrstuvwxyz123456789";
-	mt_srand((double) microtime()*1000000);
-	for($i=0; $i<$car; $i++) {
+	mt_srand((double) microtime() * 1000000);
+	for ($i = 0; $i < $car; $i++) {
 		$string .= $chaine[mt_rand() % strlen($chaine)];
 	}
 	return $string;
@@ -235,7 +229,7 @@ function ajouter_sondage()
 
 	require_once DOL_DOCUMENT_ROOT.'/opensurvey/class/opensurveysondage.class.php';
 
-	$sondage=dol_survey_random(16);
+	$sondage = dol_survey_random(16);
 
 	$allow_comments = empty($_SESSION['allow_comments']) ? 0 : 1;
 	$allow_spy = empty($_SESSION['allow_spy']) ? 0 : 1;
@@ -243,11 +237,10 @@ function ajouter_sondage()
 	// Insert survey
 	$opensurveysondage = new Opensurveysondage($db);
 	$opensurveysondage->id_sondage = $sondage;
-	$opensurveysondage->commentaires = $_SESSION['commentaires'];
-	$opensurveysondage->description = $_SESSION['commentaires'];
+	$opensurveysondage->description = $_SESSION['description'];
 	$opensurveysondage->mail_admin = $_SESSION['adresse'];
 	$opensurveysondage->nom_admin = $_SESSION['nom'];
-	$opensurveysondage->titre = $_SESSION['titre'];
+	$opensurveysondage->title = $_SESSION['title'];
 	$opensurveysondage->date_fin = $_SESSION['champdatefin'];
 	$opensurveysondage->format = $_SESSION['formatsondage'];
 	$opensurveysondage->mailsonde = $_SESSION['mailsonde'];
@@ -261,10 +254,10 @@ function ajouter_sondage()
 		dol_print_error($db);
 	}
 
-	unset($_SESSION["titre"]);
+	unset($_SESSION["title"]);
 	unset($_SESSION["nom"]);
 	unset($_SESSION["adresse"]);
-	unset($_SESSION["commentaires"]);
+	unset($_SESSION["description"]);
 	unset($_SESSION["mailsonde"]);
 	unset($_SESSION['allow_comments']);
 	unset($_SESSION['allow_spy']);
@@ -272,7 +265,7 @@ function ajouter_sondage()
 	unset($_SESSION['totalchoixjour']);
 	unset($_SESSION['champdatefin']);
 
-	$urlback=dol_buildpath('/opensurvey/card.php', 1).'?id='.$sondage;
+	$urlback = dol_buildpath('/opensurvey/card.php', 1).'?id='.$sondage;
 
 	header("Location: ".$urlback);
 	exit();

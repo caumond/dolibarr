@@ -50,7 +50,7 @@ $langs->loadLangs(array('companies', 'propal', 'compta', 'bills', 'orders', 'pro
 
 $socid = GETPOST('socid', 'int');
 
-$action = GETPOST('action', 'alpha');
+$action = GETPOST('action', 'aZ09');
 $massaction = GETPOST('massaction', 'alpha');
 $show_files = GETPOST('show_files', 'int');
 $confirm = GETPOST('confirm', 'alpha');
@@ -78,7 +78,7 @@ $search_login = GETPOST('search_login', 'alpha');
 $search_product_category = GETPOST('search_product_category', 'int');
 $search_town = GETPOST('search_town', 'alpha');
 $search_zip = GETPOST('search_zip', 'alpha');
-$search_state = trim(GETPOST("search_state"));
+$search_state = GETPOST("search_state");
 $search_country = GETPOST("search_country", 'int');
 $search_type_thirdparty = GETPOST("search_type_thirdparty", 'int');
 $search_date_start = dol_mktime(0, 0, 0, GETPOST('search_date_startmonth', 'int'), GETPOST('search_date_startday', 'int'), GETPOST('search_date_startyear', 'int'));
@@ -88,11 +88,11 @@ $search_dateend_end = dol_mktime(23, 59, 59, GETPOST('search_dateend_endmonth', 
 $search_datedelivery_start = dol_mktime(0, 0, 0, GETPOST('search_datedelivery_startmonth', 'int'), GETPOST('search_datedelivery_startday', 'int'), GETPOST('search_datedelivery_startyear', 'int'));
 $search_datedelivery_end = dol_mktime(23, 59, 59, GETPOST('search_datedelivery_endmonth', 'int'), GETPOST('search_datedelivery_endday', 'int'), GETPOST('search_datedelivery_endyear', 'int'));
 $search_availability = GETPOST('search_availability', 'int');
-$search_categ_cus = trim(GETPOST("search_categ_cus", 'int'));
+$search_categ_cus = GETPOST("search_categ_cus", 'int');
 $search_btn = GETPOST('button_search', 'alpha');
 $search_remove_btn = GETPOST('button_removefilter', 'alpha');
 
-$viewstatut = GETPOST('viewstatut', 'alpha');
+$search_status = GETPOST('search_status', 'alpha');
 $optioncss = GETPOST('optioncss', 'alpha');
 $object_statut = GETPOST('search_statut', 'alpha');
 
@@ -143,6 +143,8 @@ $fieldstosearchall = array(
 	'pd.description'=>'Description',
 	's.nom'=>"ThirdParty",
 	's.name_alias'=>"AliasNameShort",
+	's.zip'=>"Zip",
+	's.town'=>"Town",
 	'p.note_public'=>'NotePublic',
 );
 if (empty($user->socid)) $fieldstosearchall["p.note_private"] = "NotePrivate";
@@ -153,8 +155,8 @@ $arrayfields = array(
 	'p.ref'=>array('label'=>"Ref", 'checked'=>1),
 	'p.ref_client'=>array('label'=>"RefCustomer", 'checked'=>1),
 	'pr.ref'=>array('label'=>"ProjectRef", 'checked'=>1, 'enabled'=>(empty($conf->projet->enabled) ? 0 : 1)),
-    'pr.title'=>array('label'=>"ProjectLabel", 'checked'=>0, 'enabled'=>(empty($conf->projet->enabled) ? 0 : 1)),
-    's.nom'=>array('label'=>"ThirdParty", 'checked'=>1),
+	'pr.title'=>array('label'=>"ProjectLabel", 'checked'=>0, 'enabled'=>(empty($conf->projet->enabled) ? 0 : 1)),
+	's.nom'=>array('label'=>"ThirdParty", 'checked'=>1),
 	's.town'=>array('label'=>"Town", 'checked'=>1),
 	's.zip'=>array('label'=>"Zip", 'checked'=>1),
 	'state.nom'=>array('label'=>"StateShort", 'checked'=>0),
@@ -181,17 +183,12 @@ $arrayfields = array(
 	'p.datec'=>array('label'=>"DateCreation", 'checked'=>0, 'position'=>500),
 	'p.tms'=>array('label'=>"DateModificationShort", 'checked'=>0, 'position'=>500),
 	'p.date_cloture'=>array('label'=>"DateClosing", 'checked'=>0, 'position'=>500),
+	'p.note_public'=>array('label'=>'NotePublic', 'checked'=>0, 'position'=>510, 'enabled'=>(empty($conf->global->MAIN_LIST_ALLOW_PUBLIC_NOTES))),
+	'p.note_private'=>array('label'=>'NotePrivate', 'checked'=>0, 'position'=>511, 'enabled'=>(empty($conf->global->MAIN_LIST_ALLOW_PRIVATE_NOTES))),
 	'p.fk_statut'=>array('label'=>"Status", 'checked'=>1, 'position'=>1000),
 );
 // Extra fields
-if (is_array($extrafields->attributes[$object->table_element]['label']) && count($extrafields->attributes[$object->table_element]['label']) > 0)
-{
-	foreach ($extrafields->attributes[$object->table_element]['label'] as $key => $val)
-	{
-		if (!empty($extrafields->attributes[$object->table_element]['list'][$key]))
-			$arrayfields["ef.".$key] = array('label'=>$extrafields->attributes[$object->table_element]['label'][$key], 'checked'=>(($extrafields->attributes[$object->table_element]['list'][$key] < 0) ? 0 : 1), 'position'=>$extrafields->attributes[$object->table_element]['pos'][$key], 'enabled'=>(abs($extrafields->attributes[$object->table_element]['list'][$key]) != 3 && $extrafields->attributes[$object->table_element]['perms'][$key]));
-	}
-}
+include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_array_fields.tpl.php';
 
 
 /*
@@ -241,13 +238,13 @@ if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x'
 	$search_datedelivery_start = '';
 	$search_datedelivery_end = '';
 	$search_availability = '';
-	$viewstatut = '';
+	$search_status = '';
 	$object_statut = '';
 	$toselect = '';
 	$search_array_options = array();
 	$search_categ_cus = 0;
 }
-if ($object_statut != '') $viewstatut = $object_statut;
+if ($object_statut != '') $search_status = $object_statut;
 
 if (empty($reshook))
 {
@@ -285,7 +282,7 @@ $sql .= ' s.rowid as socid, s.nom as name, s.email, s.town, s.zip, s.fk_pays, s.
 $sql .= " typent.code as typent_code,";
 $sql .= " ava.rowid as availability,";
 $sql .= " state.code_departement as state_code, state.nom as state_name,";
-$sql .= ' p.rowid, p.entity, p.note_private, p.total_ht, p.tva as total_vat, p.total as total_ttc, p.localtax1, p.localtax2, p.ref, p.ref_client, p.fk_statut, p.fk_user_author, p.datep as dp, p.fin_validite as dfv,p.date_livraison as ddelivery,';
+$sql .= ' p.rowid, p.entity, p.note_private, p.total_ht, p.tva as total_vat, p.total as total_ttc, p.localtax1, p.localtax2, p.ref, p.ref_client, p.fk_statut as status, p.fk_user_author, p.datep as dp, p.fin_validite as dfv,p.date_livraison as ddelivery,';
 $sql .= ' p.fk_multicurrency, p.multicurrency_code, p.multicurrency_tx, p.multicurrency_total_ht, p.multicurrency_total_tva as multicurrency_total_vat, p.multicurrency_total_ttc,';
 $sql .= ' p.datec as date_creation, p.tms as date_update, p.date_cloture as date_cloture,';
 $sql .= ' p.note_public, p.note_private,';
@@ -331,13 +328,13 @@ if (!$user->rights->societe->client->voir && !$socid) //restriction
 if ($search_town)					$sql .= natural_search('s.town', $search_town);
 if ($search_zip)					$sql .= natural_search("s.zip", $search_zip);
 if ($search_state)					$sql .= natural_search("state.nom", $search_state);
-if ($search_country)				$sql .= " AND s.fk_pays IN (".$db->escape($search_country).')';
-if ($search_type_thirdparty)		$sql .= " AND s.fk_typent IN (".$db->escape($search_type_thirdparty).')';
+if ($search_country)				$sql .= " AND s.fk_pays IN (".$db->sanitize($db->escape($search_country)).')';
+if ($search_type_thirdparty)		$sql .= " AND s.fk_typent IN (".$db->sanitize($db->escape($search_type_thirdparty)).')';
 if ($search_ref)					$sql .= natural_search('p.ref', $search_ref);
 if ($search_refcustomer)			$sql .= natural_search('p.ref_client', $search_refcustomer);
 if ($search_refproject)				$sql .= natural_search('pr.ref', $search_refproject);
 if ($search_project)				$sql .= natural_search('pr.title', $search_project);
-if ($search_availability)			$sql .= " AND p.fk_availability IN (".$db->escape($search_availability).')';
+if ($search_availability)			$sql .= " AND p.fk_availability IN (".$db->sanitize($db->escape($search_availability)).')';
 
 if ($search_societe)				$sql .= natural_search('s.nom', $search_societe);
 if ($search_login)					$sql .= natural_search("u.login", $search_login);
@@ -357,9 +354,9 @@ if ($search_categ_cus == -2)		$sql .= " AND cc.fk_categorie IS NULL";
 
 if ($search_product_category > 0)	$sql .= " AND cp.fk_categorie = ".$db->escape($search_product_category);
 if ($socid > 0) $sql .= ' AND s.rowid = '.$socid;
-if ($viewstatut != '' && $viewstatut != '-1')
+if ($search_status != '' && $search_status != '-1')
 {
-	$sql .= ' AND p.fk_statut IN ('.$db->escape($viewstatut).')';
+	$sql .= ' AND p.fk_statut IN ('.$db->sanitize($db->escape($search_status)).')';
 }
 if ($search_date_start)             $sql .= " AND p.datep >= '".$db->idate($search_date_start)."'";
 if ($search_date_end)               $sql .= " AND p.datep <= '".$db->idate($search_date_end)."'";
@@ -406,15 +403,13 @@ if ($resql)
 	$objectstatic = new Propal($db);
 	$userstatic = new User($db);
 
- 	if ($socid > 0)
+	if ($socid > 0)
 	{
 		$soc = new Societe($db);
 		$soc->fetch($socid);
 		$title = $langs->trans('ListOfProposals').' - '.$soc->name;
 		if (empty($search_societe)) $search_societe = $soc->name;
-	}
-	else
-	{
+	} else {
 		$title = $langs->trans('ListOfProposals');
 	}
 
@@ -434,7 +429,7 @@ if ($resql)
 
 	llxHeader('', $langs->trans('Proposal'), $help_url);
 
-	$param = '&viewstatut='.urlencode($viewstatut);
+	$param = '&search_status='.urlencode($search_status);
 	if (!empty($contextpage) && $contextpage != $_SERVER["PHP_SELF"]) $param .= '&contextpage='.urlencode($contextpage);
 	if ($limit > 0 && $limit != $conf->liste_limit) $param .= '&limit='.urlencode($limit);
 	if ($sall)				 			$param .= '&sall='.urlencode($sall);
@@ -471,18 +466,18 @@ if ($resql)
 	$arrayofmassactions = array(
 		'generate_doc'=>$langs->trans("ReGeneratePDF"),
 		'builddoc'=>$langs->trans("PDFMerge"),
-	    'presend'=>$langs->trans("SendByMail"),
+		'presend'=>$langs->trans("SendByMail"),
+		'prevalidate'=>$langs->trans("Validate"),
+		'presign'=>$langs->trans("Sign"),
 	);
 	if ($user->rights->propal->supprimer) $arrayofmassactions['predelete'] = '<span class="fa fa-trash paddingrightonly"></span>'.$langs->trans("Delete");
 	if ($user->rights->propal->cloturer) $arrayofmassactions['closed'] = $langs->trans("Close");
 	if (in_array($massaction, array('presend', 'predelete', 'closed'))) $arrayofmassactions = array();
 	$massactionbutton = $form->selectMassAction('', $arrayofmassactions);
 
-	$newcardbutton = '';
-	if ($user->rights->propal->creer)
-	{
-        $newcardbutton .= dolGetButtonTitle($langs->trans('NewPropal'), '', 'fa fa-plus-circle', DOL_URL_ROOT.'/comm/propal/card.php?action=create');
-    }
+	$url = DOL_URL_ROOT.'/comm/propal/card.php?action=create';
+	if (!empty($socid)) $url .= '&socid='.$socid;
+	$newcardbutton = dolGetButtonTitle($langs->trans('NewPropal'), '', 'fa fa-plus-circle', $url, '', $user->rights->propal->creer);
 
 	// Fields title search
 	print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">';
@@ -492,16 +487,25 @@ if ($resql)
 	print '<input type="hidden" name="action" value="list">';
 	print '<input type="hidden" name="sortfield" value="'.$sortfield.'">';
 	print '<input type="hidden" name="sortorder" value="'.$sortorder.'">';
-	print '<input type="hidden" name="page" value="'.$page.'">';
 	print '<input type="hidden" name="contextpage" value="'.$contextpage.'">';
 
-	print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'commercial', 0, $newcardbutton, '', $limit);
+	print_barre_liste($title, $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, $massactionbutton, $num, $nbtotalofrecords, 'propal', 0, $newcardbutton, '', $limit, 0, 0, 1);
 
 	$topicmail = "SendPropalRef";
-	$modelmail = "proposal_send";
+	$modelmail = "propal_send";
 	$objecttmp = new Propal($db);
 	$trackid = 'pro'.$object->id;
 	include DOL_DOCUMENT_ROOT.'/core/tpl/massactions_pre.tpl.php';
+
+	if ($massaction == 'prevalidate')
+	{
+		print $form->formconfirm($_SERVER["PHP_SELF"], $langs->trans("ConfirmMassValidation"), $langs->trans("ConfirmMassValidationQuestion"), "validate", null, '', 0, 200, 500, 1);
+	}
+
+	if ($massaction == 'presign')
+	{
+		print $form->formconfirm($_SERVER["PHP_SELF"], $langs->trans("ConfirmMassSignature"), $langs->trans("ConfirmMassSignatureQuestion"), "sign", null, '', 0, 200, 500, 1);
+	}
 
 	if ($sall)
 	{
@@ -513,25 +517,25 @@ if ($resql)
 
 	$moreforfilter = '';
 
- 	// If the user can view prospects other than his'
- 	if ($user->rights->societe->client->voir || $socid)
- 	{
- 		$langs->load("commercial");
-	 	$moreforfilter .= '<div class="divsearchfield">';
- 		$moreforfilter .= $langs->trans('ThirdPartiesOfSaleRepresentative').': ';
-		$moreforfilter .= $formother->select_salesrepresentatives($search_sale, 'search_sale', $user, 0, 1, 'maxwidth200');
-	 	$moreforfilter .= '</div>';
- 	}
 	// If the user can view prospects other than his'
 	if ($user->rights->societe->client->voir || $socid)
 	{
-	 	$moreforfilter .= '<div class="divsearchfield">';
+		$langs->load("commercial");
+		$moreforfilter .= '<div class="divsearchfield">';
+		$moreforfilter .= $langs->trans('ThirdPartiesOfSaleRepresentative').': ';
+		$moreforfilter .= $formother->select_salesrepresentatives($search_sale, 'search_sale', $user, 0, 1, 'maxwidth200');
+		$moreforfilter .= '</div>';
+	}
+	// If the user can view prospects other than his'
+	if ($user->rights->societe->client->voir || $socid)
+	{
+		$moreforfilter .= '<div class="divsearchfield">';
 		$moreforfilter .= $langs->trans('LinkedToSpecificUsers').': ';
 		$moreforfilter .= $form->select_dolusers($search_user, 'search_user', 1, '', 0, '', '', 0, 0, 0, '', 0, '', 'maxwidth200');
 		$moreforfilter .= '</div>';
 	}
 	// If the user can view products
-	if ($conf->categorie->enabled && ($user->rights->produit->lire || $user->rights->service->lire))
+	if (!empty($conf->categorie->enabled) && $user->rights->categorie->lire && ($user->rights->produit->lire || $user->rights->service->lire))
 	{
 		include_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
 		$moreforfilter .= '<div class="divsearchfield">';
@@ -540,13 +544,13 @@ if ($resql)
 		$moreforfilter .= $form->selectarray('search_product_category', $cate_arbo, $search_product_category, 1, 0, 0, '', 0, 0, 0, 0, 'maxwidth300', 1);
 		$moreforfilter .= '</div>';
 	}
-	if (!empty($conf->categorie->enabled))
+	if (!empty($conf->categorie->enabled) && $user->rights->categorie->lire)
 	{
 		require_once DOL_DOCUMENT_ROOT.'/categories/class/categorie.class.php';
 		$moreforfilter .= '<div class="divsearchfield">';
-	 	$moreforfilter .= $langs->trans('CustomersProspectsCategoriesShort').': ';
+		$moreforfilter .= $langs->trans('CustomersProspectsCategoriesShort').': ';
 		$moreforfilter .= $formother->select_categories('customer', $search_categ_cus, 'search_categ_cus', 1);
-	 	$moreforfilter .= '</div>';
+		$moreforfilter .= '</div>';
 	}
 	$parameters = array();
 	$reshook = $hookmanager->executeHooks('printFieldPreListTitle', $parameters); // Note that $action and $object may have been modified by hook
@@ -571,40 +575,40 @@ if ($resql)
 	if (!empty($arrayfields['p.ref']['checked']))
 	{
 		print '<td class="liste_titre">';
-		print '<input class="flat" size="6" type="text" name="search_ref" value="'.dol_escape_htmltag($search_ref).'">';
- 		print '</td>';
+		print '<input class="flat maxwidth50" type="text" name="search_ref" value="'.dol_escape_htmltag($search_ref).'">';
+		print '</td>';
 	}
 	if (!empty($arrayfields['p.ref_client']['checked']))
 	{
 		print '<td class="liste_titre">';
-		print '<input class="flat" size="6" type="text" name="search_refcustomer" value="'.dol_escape_htmltag($search_refcustomer).'">';
-	    print '</td>';
+		print '<input class="flat maxwidth50" type="text" name="search_refcustomer" value="'.dol_escape_htmltag($search_refcustomer).'">';
+		print '</td>';
 	}
 	if (!empty($arrayfields['pr.ref']['checked']))
 	{
-    	print '<td class="liste_titre">';
-    	print '<input class="flat" size="6" type="text" name="search_refproject" value="'.dol_escape_htmltag($search_refproject).'">';
-	    print '</td>';
+		print '<td class="liste_titre">';
+		print '<input class="flat maxwidth50" type="text" name="search_refproject" value="'.dol_escape_htmltag($search_refproject).'">';
+		print '</td>';
 	}
 	if (!empty($arrayfields['pr.title']['checked']))
 	{
-	    print '<td class="liste_titre">';
-	    print '<input class="flat" size="6" type="text" name="search_project" value="'.dol_escape_htmltag($search_project).'">';
-	    print '</td>';
+		print '<td class="liste_titre">';
+		print '<input class="flat maxwidth50" type="text" name="search_project" value="'.dol_escape_htmltag($search_project).'">';
+		print '</td>';
 	}
 	if (!empty($arrayfields['s.nom']['checked']))
 	{
 		print '<td class="liste_titre" align="left">';
-		print '<input class="flat" type="text" size="10" name="search_societe" value="'.dol_escape_htmltag($search_societe).'">';
-	    print '</td>';
+		print '<input class="flat maxwidth100" type="text" name="search_societe" value="'.dol_escape_htmltag($search_societe).'">';
+		print '</td>';
 	}
-	if (!empty($arrayfields['s.town']['checked'])) print '<td class="liste_titre"><input class="flat" type="text" size="6" name="search_town" value="'.$search_town.'"></td>';
-	if (!empty($arrayfields['s.zip']['checked'])) print '<td class="liste_titre"><input class="flat" type="text" size="4" name="search_zip" value="'.$search_zip.'"></td>';
+	if (!empty($arrayfields['s.town']['checked'])) print '<td class="liste_titre"><input class="flat maxwidth50" type="text" name="search_town" value="'.$search_town.'"></td>';
+	if (!empty($arrayfields['s.zip']['checked'])) print '<td class="liste_titre"><input class="flat maxwidth50" type="text" name="search_zip" value="'.$search_zip.'"></td>';
 	// State
 	if (!empty($arrayfields['state.nom']['checked']))
 	{
 		print '<td class="liste_titre">';
-		print '<input class="flat" size="4" type="text" name="search_state" value="'.dol_escape_htmltag($search_state).'">';
+		print '<input class="flat maxwidth50" type="text" name="search_state" value="'.dol_escape_htmltag($search_state).'">';
 		print '</td>';
 	}
 	// Country
@@ -617,7 +621,7 @@ if ($resql)
 	// Company type
 	if (!empty($arrayfields['typent.code']['checked']))
 	{
-		print '<td class="liste_titre maxwidthonsmartphone" align="center">';
+		print '<td class="liste_titre maxwidth100onsmartphone" align="center">';
 		print $form->selectarray("search_type_thirdparty", $formcompany->typent_array(0), $search_type_thirdparty, 0, 0, 0, '', 0, 0, 0, (empty($conf->global->SOCIETE_SORT_ON_TYPEENT) ? 'ASC' : $conf->global->SOCIETE_SORT_ON_TYPEENT));
 		print ajax_combobox('search_type_thirdparty');
 		print '</td>';
@@ -627,12 +631,10 @@ if ($resql)
 	{
 		print '<td class="liste_titre center">';
 		print '<div class="nowrap">';
-		print $langs->trans('From').' ';
-		print $form->selectDate($search_date_start ? $search_date_start : -1, 'search_date_start', 0, 0, 1);
+		print $form->selectDate($search_date_start ? $search_date_start : -1, 'search_date_start', 0, 0, 1, '', 1, 0, 0, '', '', '', '', 1, '', $langs->trans('From'));
 		print '</div>';
 		print '<div class="nowrap">';
-		print $langs->trans('to').' ';
-		print $form->selectDate($search_date_end ? $search_date_end : -1, 'search_date_end', 0, 0, 1);
+		print $form->selectDate($search_date_end ? $search_date_end : -1, 'search_date_end', 0, 0, 1, '', 1, 0, 0, '', '', '', '', 1, '', $langs->trans('to'));
 		print '</div>';
 		print '</td>';
 	}
@@ -641,12 +643,10 @@ if ($resql)
 	{
 		print '<td class="liste_titre center">';
 		print '<div class="nowrap">';
-		print $langs->trans('From').' ';
-		print $form->selectDate($search_dateend_start ? $search_dateend_start : -1, 'search_dateend_start', 0, 0, 1);
+		print $form->selectDate($search_dateend_start ? $search_dateend_start : -1, 'search_dateend_start', 0, 0, 1, '', 1, 0, 0, '', '', '', '', 1, '', $langs->trans('From'));
 		print '</div>';
 		print '<div class="nowrap">';
-		print $langs->trans('to').' ';
-		print $form->selectDate($search_dateend_end ? $search_dateend_end : -1, 'search_dateend_end', 0, 0, 1);
+		print $form->selectDate($search_dateend_end ? $search_dateend_end : -1, 'search_dateend_end', 0, 0, 1, '', 1, 0, 0, '', '', '', '', 1, '', $langs->trans('to'));
 		print '</div>';
 		print '</td>';
 	}
@@ -655,19 +655,17 @@ if ($resql)
 	{
 		print '<td class="liste_titre center">';
 		print '<div class="nowrap">';
-		print $langs->trans('From').' ';
-		print $form->selectDate($search_datedelivery_start ? $search_datedelivery_start : -1, 'search_datedelivery_start', 0, 0, 1);
+		print $form->selectDate($search_datedelivery_start ? $search_datedelivery_start : -1, 'search_datedelivery_start', 0, 0, 1, '', 1, 0, 0, '', '', '', '', 1, '', $langs->trans('From'));
 		print '</div>';
 		print '<div class="nowrap">';
-		print $langs->trans('to').' ';
-		print $form->selectDate($search_datedelivery_end ? $search_datedelivery_end : -1, 'search_datedelivery_end', 0, 0, 1);
+		print $form->selectDate($search_datedelivery_end ? $search_datedelivery_end : -1, 'search_datedelivery_end', 0, 0, 1, '', 1, 0, 0, '', '', '', '', 1, '', $langs->trans('From'));
 		print '</div>';
 		print '</td>';
 	}
 	// Availability
 	if (!empty($arrayfields['ava.rowid']['checked']))
 	{
-		print '<td class="liste_titre maxwidthonsmartphone" align="center">';
+		print '<td class="liste_titre maxwidth100onsmartphone center">';
 		$form->selectAvailabilityDelay($search_availability, 'search_availability', '', 1);
 		print ajax_combobox('search_availability');
 		print '</td>';
@@ -782,9 +780,21 @@ if ($resql)
 		print '<td class="liste_titre">';
 		print '</td>';
 	}
-    // Date cloture
+	// Date cloture
 	if (!empty($arrayfields['p.date_cloture']['checked']))
 	{
+		print '<td class="liste_titre">';
+		print '</td>';
+	}
+	if (!empty($arrayfields['p.note_public']['checked']))
+	{
+		// Note public
+		print '<td class="liste_titre">';
+		print '</td>';
+	}
+	if (!empty($arrayfields['p.note_private']['checked']))
+	{
+		// Note private
 		print '<td class="liste_titre">';
 		print '</td>';
 	}
@@ -792,7 +802,7 @@ if ($resql)
 	if (!empty($arrayfields['p.fk_statut']['checked']))
 	{
 		print '<td class="liste_titre maxwidthonsmartphone right">';
-		$formpropal->selectProposalStatus($viewstatut, 1, 0, 1, 'customer', 'search_statut');
+		$formpropal->selectProposalStatus($search_status, 1, 0, 1, 'customer', 'search_statut');
 		print '</td>';
 	}
 	// Action column
@@ -843,6 +853,8 @@ if ($resql)
 	if (!empty($arrayfields['p.datec']['checked']))     		print_liste_field_titre($arrayfields['p.datec']['label'], $_SERVER["PHP_SELF"], "p.datec", "", $param, 'align="center" class="nowrap"', $sortfield, $sortorder);
 	if (!empty($arrayfields['p.tms']['checked']))       		print_liste_field_titre($arrayfields['p.tms']['label'], $_SERVER["PHP_SELF"], "p.tms", "", $param, 'align="center" class="nowrap"', $sortfield, $sortorder);
 	if (!empty($arrayfields['p.date_cloture']['checked']))		print_liste_field_titre($arrayfields['p.date_cloture']['label'], $_SERVER["PHP_SELF"], "p.date_cloture", "", $param, 'align="center" class="nowrap"', $sortfield, $sortorder);
+	if (!empty($arrayfields['p.note_public']['checked']))       print_liste_field_titre($arrayfields['p.note_public']['label'], $_SERVER["PHP_SELF"], "p.note_public", "", $param, '', $sortfield, $sortorder, 'center nowrap ');
+	if (!empty($arrayfields['p.note_private']['checked']))      print_liste_field_titre($arrayfields['p.note_private']['label'], $_SERVER["PHP_SELF"], "p.note_private", "", $param, '', $sortfield, $sortorder, 'center nowrap ');
 	if (!empty($arrayfields['p.fk_statut']['checked']))			print_liste_field_titre($arrayfields['p.fk_statut']['label'], $_SERVER["PHP_SELF"], "p.fk_statut", "", $param, 'class="right"', $sortfield, $sortorder);
 	print_liste_field_titre($selectedfields, $_SERVER["PHP_SELF"], "", '', '', 'align="center"', $sortfield, $sortorder, 'maxwidthsearch ');
 	print '</tr>'."\n";
@@ -861,6 +873,8 @@ if ($resql)
 		$objectstatic->ref_client = $obj->ref_client;
 		$objectstatic->note_public = $obj->note_public;
 		$objectstatic->note_private = $obj->note_private;
+		$objectstatic->statut = $obj->status;
+		$objectstatic->status = $obj->status;
 
 		$companystatic->id = $obj->socid;
 		$companystatic->name = $obj->name;
@@ -899,16 +913,16 @@ if ($resql)
 
 		if (!empty($arrayfields['p.ref']['checked']))
 		{
-			print '<td class="nowrap">';
+			print '<td class="nowraponall">';
 
 			print '<table class="nobordernopadding"><tr class="nocellnopadd">';
 			// Picto + Ref
-			print '<td class="nobordernopadding nowrap">';
+			print '<td class="nobordernopadding nowraponall">';
 			print $objectstatic->getNomUrl(1, '', '', 0, 1, (isset($conf->global->PROPAL_LIST_SHOW_NOTES) ? $conf->global->PROPAL_LIST_SHOW_NOTES : 1));
 			print '</td>';
 			// Warning
 			$warnornote = '';
-			if ($obj->fk_statut == 1 && $db->jdate($obj->dfv) < ($now - $conf->propal->cloture->warning_delay)) $warnornote .= img_warning($langs->trans("Late"));
+			if ($obj->status == Propal::STATUS_VALIDATED && $db->jdate($obj->dfv) < ($now - $conf->propal->cloture->warning_delay)) $warnornote .= img_warning($langs->trans("Late"));
 			if ($warnornote)
 			{
 				print '<td style="min-width: 20px" class="nobordernopadding nowrap">';
@@ -938,24 +952,24 @@ if ($resql)
 
 		if (!empty($arrayfields['pr.ref']['checked']))
 		{
-    		// Project ref
-    		print '<td class="nowrap">';
-    		if ($obj->project_id > 0) {
+			// Project ref
+			print '<td class="nowrap">';
+			if ($obj->project_id > 0) {
 				print $projectstatic->getNomUrl(1);
 			}
-    		print '</td>';
-    		if (!$i) $totalarray['nbfield']++;
+			print '</td>';
+			if (!$i) $totalarray['nbfield']++;
 		}
 
 		if (!empty($arrayfields['pr.title']['checked']))
 		{
-		    // Project label
-		    print '<td class="nowrap">';
-		    if ($obj->project_id > 0) {
-		        print $projectstatic->title;
-		    }
-		    print '</td>';
-		    if (!$i) $totalarray['nbfield']++;
+			// Project label
+			print '<td class="nowrap">';
+			if ($obj->project_id > 0) {
+				print $projectstatic->title;
+			}
+			print '</td>';
+			if (!$i) $totalarray['nbfield']++;
 		}
 
 		// Thirdparty
@@ -1025,9 +1039,7 @@ if ($resql)
 			{
 				print '<td class="center">'.dol_print_date($db->jdate($obj->dfv), 'day');
 				print '</td>';
-			}
-			else
-			{
+			} else {
 				print '<td>&nbsp;</td>';
 			}
 			if (!$i) $totalarray['nbfield']++;
@@ -1039,9 +1051,7 @@ if ($resql)
 			{
 				print '<td class="center">'.dol_print_date($db->jdate($obj->ddelivery), 'day');
 				print '</td>';
-			}
-			else
-			{
+			} else {
 				print '<td>&nbsp;</td>';
 			}
 			if (!$i) $totalarray['nbfield']++;
@@ -1058,10 +1068,10 @@ if ($resql)
 		// Amount HT
 		if (!empty($arrayfields['p.total_ht']['checked']))
 		{
-			  print '<td class="nowrap right">'.price($obj->total_ht)."</td>\n";
-			  if (!$i) $totalarray['nbfield']++;
-			  if (!$i) $totalarray['pos'][$totalarray['nbfield']] = 'p.total_ht';
-			  $totalarray['val']['p.total_ht'] += $obj->total_ht;
+			print '<td class="nowrap right">'.price($obj->total_ht)."</td>\n";
+			if (!$i) $totalarray['nbfield']++;
+			if (!$i) $totalarray['pos'][$totalarray['nbfield']] = 'p.total_ht';
+			$totalarray['val']['p.total_ht'] += $obj->total_ht;
 		}
 		// Amount VAT
 		if (!empty($arrayfields['p.total_vat']['checked']))
@@ -1080,42 +1090,42 @@ if ($resql)
 			$totalarray['val']['p.total_ttc'] += $obj->total_ttc;
 		}
 		// Amount invoiced
-        if (!empty($arrayfields['p.total_ht_invoiced']['checked']))
-        {
-            print '<td class="nowrap right">'.price($totalInvoicedHT)."</td>\n";
-            if (!$i) $totalarray['nbfield']++;
-            if (!$i) $totalarray['pos'][$totalarray['nbfield']] = 'p.total_ht_invoiced';
-            $totalarray['val']['p.total_ht_invoiced'] += $totalInvoicedHT;
-        }
-        // Amount invoiced
-        if (!empty($arrayfields['p.total_invoiced']['checked']))
-        {
-            print '<td class="nowrap right">'.price($totalInvoicedTTC)."</td>\n";
-            if (!$i) $totalarray['nbfield']++;
-            if (!$i) $totalarray['pos'][$totalarray['nbfield']] = 'p.total_invoiced';
-            $totalarray['val']['p.total_invoiced'] += $totalInvoicedTTC;
-        }
+		if (!empty($arrayfields['p.total_ht_invoiced']['checked']))
+		{
+			print '<td class="nowrap right">'.price($totalInvoicedHT)."</td>\n";
+			if (!$i) $totalarray['nbfield']++;
+			if (!$i) $totalarray['pos'][$totalarray['nbfield']] = 'p.total_ht_invoiced';
+			$totalarray['val']['p.total_ht_invoiced'] += $totalInvoicedHT;
+		}
+		// Amount invoiced
+		if (!empty($arrayfields['p.total_invoiced']['checked']))
+		{
+			print '<td class="nowrap right">'.price($totalInvoicedTTC)."</td>\n";
+			if (!$i) $totalarray['nbfield']++;
+			if (!$i) $totalarray['pos'][$totalarray['nbfield']] = 'p.total_invoiced';
+			$totalarray['val']['p.total_invoiced'] += $totalInvoicedTTC;
+		}
 
 		// Currency
 		if (!empty($arrayfields['p.multicurrency_code']['checked']))
 		{
-			  print '<td class="nowrap">'.$obj->multicurrency_code.' - '.$langs->trans('Currency'.$obj->multicurrency_code)."</td>\n";
-			  if (!$i) $totalarray['nbfield']++;
+			print '<td class="nowrap">'.$obj->multicurrency_code.' - '.$langs->trans('Currency'.$obj->multicurrency_code)."</td>\n";
+			if (!$i) $totalarray['nbfield']++;
 		}
 
 		// Currency rate
 		if (!empty($arrayfields['p.multicurrency_tx']['checked']))
 		{
-			  print '<td class="nowrap">';
-			  $form->form_multicurrency_rate($_SERVER['PHP_SELF'].'?id='.$obj->rowid, $obj->multicurrency_tx, 'none', $obj->multicurrency_code);
-			  print "</td>\n";
-			  if (!$i) $totalarray['nbfield']++;
+			print '<td class="nowrap">';
+			$form->form_multicurrency_rate($_SERVER['PHP_SELF'].'?id='.$obj->rowid, $obj->multicurrency_tx, 'none', $obj->multicurrency_code);
+			print "</td>\n";
+			if (!$i) $totalarray['nbfield']++;
 		}
 		// Amount HT
 		if (!empty($arrayfields['p.multicurrency_total_ht']['checked']))
 		{
-			  print '<td class="right nowrap">'.price($obj->multicurrency_total_ht)."</td>\n";
-			  if (!$i) $totalarray['nbfield']++;
+			print '<td class="right nowrap">'.price($obj->multicurrency_total_ht)."</td>\n";
+			if (!$i) $totalarray['nbfield']++;
 		}
 		// Amount VAT
 		if (!empty($arrayfields['p.multicurrency_total_vat']['checked']))
@@ -1130,17 +1140,17 @@ if ($resql)
 			if (!$i) $totalarray['nbfield']++;
 		}
 		// Amount invoiced
-        if (!empty($arrayfields['p.multicurrency_total_ht_invoiced']['checked']))
-        {
-            print '<td class="nowrap right">'.price($multicurrency_totalInvoicedHT)."</td>\n";
-            if (!$i) $totalarray['nbfield']++;
-        }
-        // Amount invoiced
-        if (!empty($arrayfields['p.multicurrency_total_invoiced']['checked']))
-        {
-            print '<td class="nowrap right">'.price($multicurrency_totalInvoicedTTC)."</td>\n";
-            if (!$i) $totalarray['nbfield']++;
-        }
+		if (!empty($arrayfields['p.multicurrency_total_ht_invoiced']['checked']))
+		{
+			print '<td class="nowrap right">'.price($multicurrency_totalInvoicedHT)."</td>\n";
+			if (!$i) $totalarray['nbfield']++;
+		}
+		// Amount invoiced
+		if (!empty($arrayfields['p.multicurrency_total_invoiced']['checked']))
+		{
+			print '<td class="nowrap right">'.price($multicurrency_totalInvoicedTTC)."</td>\n";
+			if (!$i) $totalarray['nbfield']++;
+		}
 
 		$userstatic->id = $obj->fk_user_author;
 		$userstatic->login = $obj->login;
@@ -1166,8 +1176,7 @@ if ($resql)
 				if ($nbofsalesrepresentative > 3)   // We print only number
 				{
 					print $nbofsalesrepresentative;
-				}
-				elseif ($nbofsalesrepresentative > 0)
+				} elseif ($nbofsalesrepresentative > 0)
 				{
 					$userstatic = new User($db);
 					$j = 0;
@@ -1189,9 +1198,7 @@ if ($resql)
 					}
 				}
 				//else print $langs->trans("NoSalesRepresentativeAffected");
-			}
-			else
-			{
+			} else {
 				print '&nbsp';
 			}
 			print '</td>';
@@ -1201,7 +1208,7 @@ if ($resql)
 		// Extra fields
 		include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_print_fields.tpl.php';
 		// Fields from hook
-		$parameters = array('arrayfields'=>$arrayfields, 'obj'=>$obj, 'i'=>$i);
+		$parameters = array('arrayfields'=>$arrayfields, 'obj'=>$obj, 'i'=>$i, 'totalarray'=>&$totalarray);
 		$reshook = $hookmanager->executeHooks('printFieldListValue', $parameters); // Note that $action and $object may have been modified by hook
 		print $hookmanager->resPrint;
 		// Date creation
@@ -1220,7 +1227,7 @@ if ($resql)
 			print '</td>';
 			if (!$i) $totalarray['nbfield']++;
 		}
-    	// Date cloture
+		// Date cloture
 		if (!empty($arrayfields['p.date_cloture']['checked']))
 		{
 			print '<td align="center" class="nowrap">';
@@ -1228,10 +1235,26 @@ if ($resql)
 			print '</td>';
 			if (!$i) $totalarray['nbfield']++;
 		}
+		// Note public
+		if (!empty($arrayfields['p.note_public']['checked']))
+		{
+			print '<td class="center">';
+			print dol_escape_htmltag($obj->note_public);
+			print '</td>';
+			if (!$i) $totalarray['nbfield']++;
+		}
+		// Note private
+		if (!empty($arrayfields['p.note_private']['checked']))
+		{
+			print '<td class="center">';
+			print dol_escape_htmltag($obj->note_private);
+			print '</td>';
+			if (!$i) $totalarray['nbfield']++;
+		}
 		// Status
 		if (!empty($arrayfields['p.fk_statut']['checked']))
 		{
-			print '<td class="nowrap right">'.$objectstatic->LibStatut($obj->fk_statut, 5).'</td>';
+			print '<td class="nowrap right">'.$objectstatic->getLibStatut(5).'</td>';
 			if (!$i) $totalarray['nbfield']++;
 		}
 		// Action column
@@ -1276,12 +1299,72 @@ if ($resql)
 	$delallowed = $user->rights->propal->creer;
 
 	print $formfile->showdocuments('massfilesarea_proposals', '', $filedir, $urlsource, 0, $delallowed, '', 1, 1, 0, 48, 1, $param, $title, '', '', '', null, $hidegeneratedfilelistifempty);
-}
-else
-{
-	dol_print_error($db);
+
+	if ($action == 'validate') {
+		if (GETPOST('confirm') == 'yes') {
+			$tmpproposal = new Propal($db);
+			$db->begin();
+			$error = 0;
+			foreach ($toselect as $checked) {
+				if ($tmpproposal->fetch($checked)) {
+					if ($tmpproposal->statut == 0) {
+						if ($tmpproposal->valid($user)) {
+							setEventMessage($tmpproposal->ref." ".$langs->trans('PassedInOpenStatus'), 'mesgs');
+						} else {
+							setEventMessage($langs->trans('CantBeValidated'), 'errors');
+							$error++;
+						}
+					} else {
+						setEventMessage($tmpproposal->ref." ".$langs->trans('IsNotADraft'), 'errors');
+						$error++;
+					}
+				}
+				dol_print_error($db);
+				$error++;
+			}
+			if ($error) {
+				$db->rollback();
+			} else {
+				$db->commit();
+			}
+		}
+	}
+
+	if ($action == "sign") {
+		if (GETPOST('confirm') == 'yes') {
+			$tmpproposal = new Propal($db);
+			$db->begin();
+			$error = 0;
+			foreach ($toselect as $checked) {
+				if ($tmpproposal->fetch($checked)) {
+					if ($tmpproposal->statut == 1) {
+						$tmpproposal->statut = 2;
+						if ($tmpproposal->update($user)) {
+							setEventMessage($tmpproposal->ref." ".$langs->trans('Signed'), 'mesgs');
+						} else {
+							dol_print_error($db);
+							$error++;
+						}
+					} else {
+						setEventMessage($tmpproposal->ref." ".$langs->trans('CantBeSign'), 'errors');
+						$error++;
+					}
+				} else {
+					dol_print_error($db);
+					$error++;
+				}
+			}
+			if ($error) {
+				$db->rollback();
+			} else {
+				$db->commit();
+			}
+		}
+	}
+} else {
+		dol_print_error($db);
 }
 
-// End of page
-llxFooter();
-$db->close();
+	// End of page
+	llxFooter();
+	$db->close();

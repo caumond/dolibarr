@@ -8,6 +8,7 @@ ALL:
 Check "@CHANGE"
 
 
+
 PrestaShopWebservice:
 ---------------------
 Replace
@@ -46,6 +47,14 @@ By
 
 * In file nusoap.php, to avoid a warning,
 Replace call to serialize_val with no bugged value
+
+* In all files, replace constructor names into __construct. Replace also parent::constructor_name with parent::__construct
+
+* Line 4222 of file nusoap.php
+
+		$rev = array();
+		preg_match('/\$Revision: ([^ ]+)/', $this->revision, $rev);
+		$this->outgoing_headers[] = "X-SOAP-Server: $this->title/$this->version (".(isset($rev[1]) ? $rev[1] : '').")";
 
 
 
@@ -104,6 +113,27 @@ with
 				//return false;	
 			}
 			
+* Replace in tcpdf.php
+
+		if (($imgsrc[0] === '/') AND !empty($_SERVER['DOCUMENT_ROOT']) AND ($_SERVER['DOCUMENT_ROOT'] != '/')) {
+
+with
+
+		// @CHANGE LDR Add support for src="file://..." links
+		if (strpos($imgsrc, 'file://') === 0) {
+			$imgsrc = str_replace('file://', '/', $imgsrc);
+			$imgsrc = urldecode($imgsrc);
+			$testscrtype = @parse_url($imgsrc);
+			if (empty($testscrtype['query'])) {
+				// convert URL to server path
+				$imgsrc = str_replace(K_PATH_URL, K_PATH_MAIN, $imgsrc);
+			} elseif (preg_match('|^https?://|', $imgsrc) !== 1) {
+				// convert URL to server path
+				$imgsrc = str_replace(K_PATH_MAIN, K_PATH_URL, $imgsrc);
+			}
+		}
+		elseif (($imgsrc[0] === '/') AND !empty($_SERVER['DOCUMENT_ROOT']) AND ($_SERVER['DOCUMENT_ROOT'] != '/')) {
+					
 
 
 * In tecnickcom/tcpdf/include/tcpdf_static, in function fopenLocal, replace
@@ -146,6 +176,7 @@ In htdocs/includes/tecnickcom/tcpdf/tcpdf.php
 TCPDI:
 ------
 Add fpdf_tpl.php 1.2
+
 Add tcpdi.php
 
 Add tcpdi_parser.php and replace:
@@ -184,8 +215,6 @@ with
 
 
 
-
-
 JCROP:
 ------
 * Remove analytics tag into file index.html
@@ -194,14 +223,6 @@ JCROP:
 JQUERYFILETREE:
 ---------------
 * Remove directory htdocs/includes/jquery/plugins/jqueryFileTree/connectors
-
-
-PHPEXCEL:
----------
-* Replace in htdocs/includes/phpoffice/phpexcel/Classes/PHPExcel/Shared/OLE.php
-    continue;
-with:
-    continue 2;
 
 
 RESTLER:
@@ -215,11 +236,21 @@ Change content of file htdocs/includes/restler/framework/Luracast/Restler/explor
     public static function getShortName($className)
     {
     	// @CHANGE LDR
-    	if (! is_string($className)) return;
+    	if (!is_string($className)) return;
     	//var_dump($className);
 
-    	
-    	
+* Add line into Data/Text.php to complete function
+
+    public static function endsWith($haystack, $needle)
+    {
+        $length = strlen($needle);
+        if ($length == 0) {
+            return true;
+        }
+    	// @CHANGE LDR
+        if (!is_string($haystack)) return false;
+
+
 PARSEDOWN
 ---------
 
@@ -276,4 +307,16 @@ JEDITABLE.JS
 
 * <button type="submit" />  =>  <button class="button" type="submit" />
 * <button type="cancel" />  =>  <button class="button" type="cancel" />
+
+
+
+SELECT2
+-------
+
+Edit CSS to restore line removed between 4.0.5 and 4.0.6. It generates this bug: https://github.com/select2/select2/issues/5832
+
+.select2-hidden-accessible {
+  margin: -10000px !important;                /* line to restore */
+}
+
 

@@ -24,7 +24,7 @@
 --
 -- Ne pas placer de commentaire en fin de ligne, ce fichier est parsé lors
 -- de l''install et tous les sigles '--' sont supprimés.
--- Not: To replace a string thas is '__, 0' inot a increasing num, you can use vi with comment
+-- Note: To replace a string thas is '__, 0' into an increasing number, you can use vi with comment
 -- :let @a=1 | %s/__, 0/\='__, '.(@a+setreg('a',@a+1))/g
 --                                                         
 
@@ -468,7 +468,7 @@ INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, acc
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  413,'PCG99-BASE','INCOME',    '754', '409', 'Ristournes perçues des coopératives (provenant des excédents)', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  414,'PCG99-BASE','INCOME',    '755', '409', 'Quotes-parts de résultat sur opérations faites en commun', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  415,'PCG99-BASE','INCOME',    '758', '409', 'Produits divers de gestion courante', 1);
-INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  416,'PCG99-BASE','INCOME',     'FIN',   '76','1507', 'Produits financiers', 1);
+INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  416,'PCG99-BASE','INCOME',     '76','1507', 'Produits financiers', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  417,'PCG99-BASE','INCOME',    '761', '416', 'Produits de participations', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  418,'PCG99-BASE','INCOME',    '762', '416', 'Produits des autres immobilisations financières', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  419,'PCG99-BASE','INCOME',    '763', '416', 'Revenus des autres créances', 1);
@@ -476,7 +476,7 @@ INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, acc
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  421,'PCG99-BASE','INCOME',    '765', '416', 'Escomptes obtenus', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  422,'PCG99-BASE','INCOME',    '766', '416', 'Gains de change', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  423,'PCG99-BASE','INCOME',    '767', '416', 'Produits nets sur cessions de valeurs mobilières de placement', 1);
-INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  424,'PCG99-BASE','INCOME',     'FIN',  '768', '416', 'Autres produits financiers', 1);
+INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  424,'PCG99-BASE','INCOME',    '768', '416', 'Autres produits financiers', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  425,'PCG99-BASE','INCOME',     '77','1507', 'Produits exceptionnels', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  426,'PCG99-BASE','INCOME',    '771', '425', 'Produits exceptionnels sur opérations de gestion', 1);
 INSERT INTO llx_accounting_account (entity, rowid, fk_pcg_version, pcg_type, account_number, account_parent, label, active) VALUES (__ENTITY__,  427,'PCG99-BASE','INCOME',    '772', '425', '(Compte à la disposition des entités pour enregistrer, en cours d''exercice, les produits sur exercices antérieurs)', 1);

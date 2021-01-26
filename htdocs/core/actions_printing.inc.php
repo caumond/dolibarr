@@ -30,26 +30,32 @@
 // Print file
 if ($action == 'print_file' && $user->rights->printing->read) {
 	$langs->load("printing");
-	require_once DOL_DOCUMENT_ROOT . '/core/modules/printing/modules_printing.php';
+	require_once DOL_DOCUMENT_ROOT.'/core/modules/printing/modules_printing.php';
 	$objectprint = new PrintingDriver($db);
 	$list = $objectprint->listDrivers($db, 10);
-	if (! empty($list)) {
-		$errorprint=0;
-		$printerfound=0;
+	$dirmodels = array_merge(array('/core/modules/printing/'), (array) $conf->modules_parts['printing']);
+	if (!empty($list)) {
+		$errorprint = 0;
+		$printerfound = 0;
 		foreach ($list as $driver) {
-			require_once DOL_DOCUMENT_ROOT.'/core/modules/printing/'.$driver.'.modules.php';
-			$langs->load($driver);
+			foreach ($dirmodels as $dir) {
+				if (file_exists(dol_buildpath($dir, 0).$driver.'.modules.php')) {
+					$classfile = dol_buildpath($dir, 0).$driver.'.modules.php';
+					break;
+				}
+			}
+			require_once $classfile;
 			$classname = 'printing_'.$driver;
 			$printer = new $classname($db);
+			$langs->load($printer::LANGFILE);
 			//print '<pre>'.print_r($printer, true).'</pre>';
 
-			if (! empty($conf->global->{$printer->active}))
-			{
+			if (!empty($conf->global->{$printer->active})) {
 				$printerfound++;
 
-				$subdir='';
+				$subdir = '';
 				$module = GETPOST('printer', 'alpha');
-				switch ($module )
+				switch ($module)
 				{
 					case 'livraison' :
 						$subdir = 'receipt';
@@ -69,21 +75,20 @@ if ($action == 'print_file' && $user->rights->printing->read) {
 						//print '<pre>'.print_r($printer->errors, true).'</pre>';
 						setEventMessages($printer->error, $printer->errors, 'errors');
 					}
-					if ($ret==0)
+					if ($ret == 0)
 					{
 						//print '<pre>'.print_r($printer->errors, true).'</pre>';
 						setEventMessages($printer->error, $printer->errors);
 						setEventMessages($langs->transnoentitiesnoconv("FileWasSentToPrinter", basename(GETPOST('file', 'alpha'))).' '.$langs->transnoentitiesnoconv("ViaModule").' '.$printer->name, null);
 					}
-				}
-				catch(Exception $e)
+				} catch (Exception $e)
 				{
 					$ret = 1;
 					setEventMessages($e->getMessage(), null, 'errors');
 				}
 			}
 		}
-		if ($printerfound==0) setEventMessages($langs->trans("NoActivePrintingModuleFound", $langs->transnoentities("Module64000Name")), null, 'warnings');
+		if ($printerfound == 0) setEventMessages($langs->trans("NoActivePrintingModuleFound", $langs->transnoentities("Module64000Name")), null, 'warnings');
 	} else {
 		setEventMessages($langs->trans("NoModuleFound"), null, 'warnings');
 	}

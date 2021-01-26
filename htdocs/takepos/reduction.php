@@ -50,25 +50,21 @@ if (empty($user->rights->takepos->run)) {
 $invoice = new Facture($db);
 if ($invoiceid > 0)
 {
-    $invoice->fetch($invoiceid);
-}
-else
-{
-    $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."facture where ref='(PROV-POS".$_SESSION["takeposterminal"]."-".$place.")'";
-    $resql = $db->query($sql);
-    $obj = $db->fetch_object($resql);
-    if ($obj)
-    {
-        $invoiceid = $obj->rowid;
-    }
-    if (!$invoiceid)
-    {
-        $invoiceid = 0; // Invoice does not exist yet
-    }
-    else
-    {
-        $invoice->fetch($invoiceid);
-    }
+	$invoice->fetch($invoiceid);
+} else {
+	$sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."facture where ref='(PROV-POS".$_SESSION["takeposterminal"]."-".$place.")'";
+	$resql = $db->query($sql);
+	$obj = $db->fetch_object($resql);
+	if ($obj)
+	{
+		$invoiceid = $obj->rowid;
+	}
+	if (!$invoiceid)
+	{
+		$invoiceid = 0; // Invoice does not exist yet
+	} else {
+		$invoice->fetch($invoiceid);
+	}
 }
 
 $arrayofcss = array('/takepos/css/pos.css.php');
@@ -78,12 +74,12 @@ top_htmlhead($head, '', 0, 0, $arrayofjs, $arrayofcss);
 
 $langs->loadLangs(array('main', 'bills', 'cashdesk'));
 
-if (!empty($conf->global->TAKEPOS_NUMPAD_USE_PAYMENT_ICON)) {
+if (!isset($conf->global->TAKEPOS_NUMPAD_USE_PAYMENT_ICON) || !empty($conf->global->TAKEPOS_NUMPAD_USE_PAYMENT_ICON)) {
 	$htmlReductionPercent = '<span class="fa fa-2x fa-percent"></span>';
-	$htmlReductionAmount = '<span class="fa fa-2x fa-money"></span>';
+	$htmlReductionAmount = '<span class="fa fa-2x fa-money"></span><br>'.$langs->trans('Amount');
 } else {
-	$htmlReductionPercent = $langs->trans('ReductionShort') . '<br>%';
-	$htmlReductionAmount = $langs->trans('ReductionShort') . '<br>' . $langs->trans('Amount');
+	$htmlReductionPercent = $langs->trans('ReductionShort').'<br>%';
+	$htmlReductionAmount = $langs->trans('ReductionShort').'<br>'.$langs->trans('Amount');
 }
 ?>
 <link rel="stylesheet" href="css/pos.css.php">
@@ -202,7 +198,7 @@ if (!empty($conf->global->TAKEPOS_NUMPAD_USE_PAYMENT_ICON)) {
 <div style="position:absolute; top:2%; left:5%; width:91%;">
 <center>
 <?php
-    print '<input type="text" class="takepospay" id="reduction_total" name="reduction_total" style="width: 50%;" placeholder="'.$langs->trans('Reduction').'">';
+	print '<input type="text" class="takepospay" id="reduction_total" name="reduction_total" style="width: 50%;" placeholder="'.$langs->trans('Reduction').'">';
 ?>
 </center>
 </div>
@@ -213,11 +209,11 @@ if (!empty($conf->global->TAKEPOS_NUMPAD_USE_PAYMENT_ICON)) {
 print '<button type="button" class="calcbutton" onclick="AddReduction(7);">7</button>';
 print '<button type="button" class="calcbutton" onclick="AddReduction(8);">8</button>';
 print '<button type="button" class="calcbutton" onclick="AddReduction(9);">9</button>';
-print '<button type="button" class="calcbutton2" id="reduction_type_percent" onclick="Edit(\'p\');">' . $htmlReductionPercent . '</button>';
+print '<button type="button" class="calcbutton2" id="reduction_type_percent" onclick="Edit(\'p\');">'.$htmlReductionPercent.'</button>';
 print '<button type="button" class="calcbutton" onclick="AddReduction(4);">4</button>';
 print '<button type="button" class="calcbutton" onclick="AddReduction(5);">5</button>';
 print '<button type="button" class="calcbutton" onclick="AddReduction(6);">6</button>';
-print '<button type="button" class="calcbutton2" id="reduction_type_amount" onclick="Edit(\'a\');">' . $htmlReductionAmount . '</button>';
+print '<button type="button" class="calcbutton2" id="reduction_type_amount" onclick="Edit(\'a\');">'.$htmlReductionAmount.'</button>';
 print '<button type="button" class="calcbutton" onclick="AddReduction(1);">1</button>';
 print '<button type="button" class="calcbutton" onclick="AddReduction(2);">2</button>';
 print '<button type="button" class="calcbutton" onclick="AddReduction(3);">3</button>';

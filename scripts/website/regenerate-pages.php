@@ -22,6 +22,8 @@
  * \brief Regenerate all pages of a web site
  */
 
+if (!defined('NOSESSION')) define('NOSESSION', '1');
+
 $sapi_type = php_sapi_name();
 $script_file = basename(__FILE__);
 $path = __DIR__.'/';
@@ -37,9 +39,9 @@ define('EVEN_IF_ONLY_LOGIN_ALLOWED', 1); // Set this define to 0 if you want to 
 
 $error = 0;
 
-$mode = empty($argv[1])?'':$argv[1];
-$websiteref = empty($argv[2])?'':$argv[2];
-$max = (!isset($argv[3]) || (empty($argv[3]) && $argv[3] !== '0'))?'10':$argv[3];
+$mode = empty($argv[1]) ? '' : $argv[1];
+$websiteref = empty($argv[2]) ? '' : $argv[2];
+$max = (!isset($argv[3]) || (empty($argv[3]) && $argv[3] !== '0')) ? '10' : $argv[3];
 
 if (empty($argv[2]) || !in_array($argv[1], array('test', 'confirm')) || empty($websiteref)) {
 	print '***** '.$script_file.' *****'."\n";
@@ -67,13 +69,13 @@ $websitepagestatic = new WebsitePage($db);
 
 $db->begin();
 
-$listofpages = $websitepagestatic->fetchAll($website->id, '', $max);
+$listofpages = $websitepagestatic->fetchAll($website->id, '', '', $max);
 
 global $dolibarr_main_data_root;
 $pathofwebsite = $dolibarr_main_data_root.'/website/'.$websiteref;
 
 $nbgenerated = 0;
-foreach($listofpages as $websitepage) {
+foreach ($listofpages as $websitepage) {
 	$filealias = $pathofwebsite.'/'.$websitepage->pageurl.'.php';
 	$filetpl = $pathofwebsite.'/page'.$websitepage->id.'.tpl.php';
 	if ($mode == 'confirm') {

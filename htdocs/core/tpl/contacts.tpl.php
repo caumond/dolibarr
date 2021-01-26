@@ -40,21 +40,27 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/html.formcompany.class.php';
 $module = $object->element;
 
 // Special cases
-if ($module == 'propal') { $permission = $user->rights->propale->creer; }
-elseif ($module == 'fichinter') { $permission = $user->rights->ficheinter->creer; }
-elseif ($module == 'order_supplier') { $permission = $user->rights->fournisseur->commande->creer; }
-elseif ($module == 'invoice_supplier') { $permission = $user->rights->fournisseur->facture->creer; }
-elseif ($module == 'project') { $permission = $user->rights->projet->creer; }
-elseif ($module == 'action') { $permission = $user->rights->agenda->myactions->create; }
-elseif ($module == 'shipping') { $permission = $user->rights->expedition->creer; }
-elseif ($module == 'reception') { $permission = $user->rights->reception->creer; }
-elseif ($module == 'project_task') { $permission = $user->rights->projet->creer; }
-elseif (!isset($permission) && isset($user->rights->$module->creer))
-{
+if ($module == 'propal') {
+	$permission = $user->rights->propale->creer;
+} elseif ($module == 'fichinter') {
+	$permission = $user->rights->ficheinter->creer;
+} elseif ($module == 'order_supplier') {
+	$permission = $user->rights->fournisseur->commande->creer;
+} elseif ($module == 'invoice_supplier') {
+	$permission = $user->rights->fournisseur->facture->creer;
+} elseif ($module == 'project') {
+	$permission = $user->rights->projet->creer;
+} elseif ($module == 'action') {
+	$permission = $user->rights->agenda->myactions->create;
+} elseif ($module == 'shipping') {
+	$permission = $user->rights->expedition->creer;
+} elseif ($module == 'reception') {
+	$permission = $user->rights->reception->creer;
+} elseif ($module == 'project_task') {
+	$permission = $user->rights->projet->creer;
+} elseif (!isset($permission) && isset($user->rights->$module->creer)) {
 	$permission = $user->rights->$module->creer;
-}
-elseif (!isset($permission) && isset($user->rights->$module->write))
-{
+} elseif (!isset($permission) && isset($user->rights->$module->write)) {
 	$permission = $user->rights->$module->write;
 }
 
@@ -70,10 +76,11 @@ $userstatic = new User($db);
 if ($permission)
 {
 	print '<div class="underbanner clearboth"></div>'."\n";
-	print '<div class="div-table-responsive">'."\n";
+
+	print '<div class="div-table-responsive-no-min">'."\n";
 	print '<div class="tagtable tableforcontact centpercent noborder nobordertop allwidth">'."\n";
 
-    ?>
+	?>
 	<form class="tagtr liste_titre">
 		<div class="tagtd liste_titre"><?php echo $langs->trans("NatureOfContact"); ?></div>
 		<div class="tagtd liste_titre"><?php echo $langs->trans("ThirdParty"); ?></div>
@@ -87,8 +94,8 @@ if ($permission)
 
 	if (empty($hideaddcontactforuser))
 	{
-	    ?>
-	<form class="tagtr impair" action="<?php echo $_SERVER["PHP_SELF"].'?id='.$object->id; ?>" method="POST">
+		?>
+	<form class="tagtr impair nohover" action="<?php echo $_SERVER["PHP_SELF"].'?id='.$object->id; ?>" method="POST">
 	<input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>" />
 	<input type="hidden" name="id" value="<?php echo $object->id; ?>" />
 	<input type="hidden" name="action" value="addcontact" />
@@ -101,7 +108,7 @@ if ($permission)
 		<?php
 		$tmpobject = $object;
 		if (($object->element == 'shipping' || $object->element == 'reception') && is_object($objectsrc)) $tmpobject = $objectsrc;
-		echo $formcompany->selectTypeContact($tmpobject, '', 'type', 'internal');
+		$formcompany->selectTypeContact($tmpobject, '', 'type', 'internal');
 		?></div>
 		<div class="tagtd">&nbsp;</div>
 		<div class="tagtd center"><input type="submit" class="button" value="<?php echo $langs->trans("Add"); ?>"></div>
@@ -110,11 +117,10 @@ if ($permission)
 	    <?php
 	}
 
-	if (empty($hideaddcontactforthirdparty))
-	{
-	    ?>
+	if (empty($hideaddcontactforthirdparty)) {
+		?>
 
-	<form class="tagtr pair" action="<?php echo $_SERVER["PHP_SELF"].'?id='.$object->id; ?>" method="POST">
+	<form class="tagtr pair nohover" action="<?php echo $_SERVER["PHP_SELF"].'?id='.$object->id; ?>" method="POST">
 	<input type="hidden" name="token" value="<?php echo $_SESSION['newtoken']; ?>" />
 	<input type="hidden" name="id" value="<?php echo $object->id; ?>" />
 	<input type="hidden" name="action" value="addcontact" />
@@ -127,28 +133,29 @@ if ($permission)
 			// add company icon before select list
 			if ($selectedCompany)
 			{
-			    echo img_object('', 'company', 'class="hideonsmartphone"');
+				echo img_object('', 'company', 'class="hideonsmartphone"');
 			}
 			?>
 			<?php $selectedCompany = $formcompany->selectCompaniesForNewContact($object, 'id', $selectedCompany, 'newcompany', '', 0, '', 'minwidth300imp'); ?>
 		</div>
 		<div class="tagtd maxwidthonsmartphone noborderbottom">
 			<?php
-			$nbofcontacts = $form->select_contacts(($selectedCompany > 0 ? $selectedCompany : -1), '', 'contactid', 3, '', '', 1, 'minwidth100imp');
+			print $form->selectcontacts(($selectedCompany > 0 ? $selectedCompany : -1), '', 'contactid', 3, '', '', 1, 'minwidth100imp');
+			$nbofcontacts = $form->num;
 
 			$newcardbutton = '';
 			if (!empty($object->socid) && $object->socid > 1 && $user->rights->societe->creer)
 			{
-				$newcardbutton .= '<a href="'.DOL_URL_ROOT.'/contact/card.php?socid='.$object->socid.'&action=create&backtopage='.urlencode($_SERVER["PHP_SELF"].'?id='.$object->id).'" title="'.$langs->trans('NewContact').'"><span class="fa fa-plus-circle valignmiddle paddingleft"></span></a>';
+				$newcardbutton .= '<a href="'.DOL_URL_ROOT.'/contact/card.php?socid='.$selectedCompany.'&action=create&backtopage='.urlencode($_SERVER["PHP_SELF"].'?id='.$object->id).'" title="'.$langs->trans('NewContact').'"><span class="fa fa-plus-circle valignmiddle paddingleft"></span></a>';
 			}
 			print $newcardbutton;
 			?>
 		</div>
 		<div class="tagtd maxwidthonsmartphone noborderbottom">
 			<?php
-			$tmpobject=$object;
+			$tmpobject = $object;
 			if (($object->element == 'shipping' || $object->element == 'reception') && is_object($objectsrc)) $tmpobject = $objectsrc;
-			$formcompany->selectTypeContact($tmpobject, $preselectedtypeofcontact, 'type', 'external', 'position', 0, 'minwidth100imp');
+			$formcompany->selectTypeContact($tmpobject, $preselectedtypeofcontact, 'typecontact', 'external', 'position', 0, 'minwidth100imp');
 			?>
 		</div>
 		<div class="tagtd noborderbottom">&nbsp;</div>
@@ -162,86 +169,78 @@ if ($permission)
 
 	print "</div>";
 	print "</div>";
+
+	print '<br>';
 }
 
 
-/**
-* Prepare list
-*/
+// Prepare list
 
 // TODO: replace this with direct SQL string to use $db->sort($sortfield, $sortorder)
 $list = array();
 foreach (array('internal', 'external') as $source)
 {
-	$tmpobject = $object;
-
 	if (($object->element == 'shipping' || $object->element == 'reception') && is_object($objectsrc))
 	{
-		$tmpobject = $objectsrc;
+		$contactlist = $objectsrc->liste_contact(-1, $source);
+	} else {
+		$contactlist = $object->liste_contact(-1, $source);
 	}
 
-	$tab = $tmpobject->liste_contact(-1, $source);
-	$num = count($tab);
-
-	$i = 0;
-	while ($i < $num)
+	foreach ($contactlist as $contact)
 	{
 		$entry = new stdClass();
+		$entry->id   = $contact['rowid'];
+		$entry->type = $contact['libelle'];
+		$entry->nature = "";
+		$entry->thirdparty_html = "";
+		$entry->thirdparty_name = "";
+		$entry->contact_html = "";
+		$entry->contact_name = "";
+		$entry->status = "";
 
-		$entry->id   = $tab[$i]['rowid'];
-		$entry->type = $tab[$i]['libelle'];
-
-		if ($tab[$i]['source'] == 'internal')
+		if ($contact['source'] == 'internal')
 		{
 			$entry->nature = $langs->trans("User");
-		}
-		elseif ($tab[$i]['source'] == 'external')
-		{
+		} elseif ($contact['source'] == 'external') {
 			$entry->nature = $langs->trans("ThirdPartyContact");
 		}
 
-		if ($tab[$i]['socid'] > 0)
+		if ($contact['socid'] > 0)
 		{
-			$companystatic->fetch($tab[$i]['socid']);
-			$entry->thirdparty = $companystatic->getNomUrl(1);
-		}
-		elseif ($tab[$i]['socid'] < 0)
-		{
-			$entry->thirdparty = $conf->global->MAIN_INFO_SOCIETE_NOM;
-		}
-		elseif (!$tab[$i]['socid'])
-		{
-			$entry->thirdparty = "";
+			$companystatic->fetch($contact['socid']);
+			$entry->thirdparty_html = $companystatic->getNomUrl(1);
+			$entry->thirdparty_name = strtolower($companystatic->getFullName($langs));
+		} elseif ($contact['socid'] < 0) {
+			$entry->thirdparty_html = $conf->global->MAIN_INFO_SOCIETE_NOM;
+			$entry->thirdparty_name = strtolower($conf->global->MAIN_INFO_SOCIETE_NOM);
 		}
 
-		if ($tab[$i]['source'] == 'internal')
+		if ($contact['source'] == 'internal')
 		{
-			$userstatic->fetch($tab[$i]['id']);
-			$entry->contact = $userstatic->getNomUrl(-1, '', 0, 0, 0, 0, '', 'valignmiddle');
-		}
-		elseif ($tab[$i]['source'] == 'external')
-		{
-			$contactstatic->fetch($tab[$i]['id']);
-			$entry->contact = $contactstatic->getNomUrl(1, '', 0, '', 0, 0);
-		}
-
-		if ($tab[$i]['source'] == 'internal')
-		{
-			$entry->status = $userstatic->LibStatut($tab[$i]['statuscontact'], 3);
-		}
-		elseif ($tab[$i]['source'] == 'external')
-		{
-			$entry->status = $contactstatic->LibStatut($tab[$i]['statuscontact'], 3);
+			$userstatic->fetch($contact['id']);
+			$entry->contact_html = $userstatic->getNomUrl(-1, '', 0, 0, 0, 0, '', 'valignmiddle');
+			$entry->contact_name = strtolower($userstatic->getFullName($langs));
+		} elseif ($contact['source'] == 'external') {
+			$contactstatic->fetch($contact['id']);
+			$entry->contact_html = $contactstatic->getNomUrl(1, '', 0, '', 0, 0);
+			$entry->contact_name = strtolower($contactstatic->getFullName($langs));
 		}
 
-		$i++;
+		if ($contact['source'] == 'internal')
+		{
+			$entry->status = $userstatic->LibStatut($contact['statuscontact'], 3);
+		} elseif ($contact['source'] == 'external') {
+			$entry->status = $contactstatic->LibStatut($contact['statuscontact'], 3);
+		}
+
 		$list[] = $entry;
-    }
+	}
 }
 
 
-$sortfield = GETPOST("sortfield", "alpha");
-$sortorder = GETPOST("sortorder", 'alpha');
+$sortfield = GETPOST("sortfield", "aZ09comma");
+$sortorder = GETPOST("sortorder", 'aZ09comma');
 
 if (!$sortfield) $sortfield = "nature";
 if (!$sortorder) $sortorder = "asc";
@@ -264,9 +263,6 @@ $param = 'id='.$object->id.'&mainmenu=home';
 /**
  * Show list
  */
-
-print '<br>';
-
 print '<form method="POST" id="searchFormList" action="'.$_SERVER["PHP_SELF"].'">';
 print '<input type="hidden" name="token" value="'.newToken().'">';
 print '<input type="hidden" name="formfilteraction" id="formfilteraction" value="list">';
@@ -274,18 +270,19 @@ print '<input type="hidden" name="action" value="list">';
 print '<input type="hidden" name="sortfield" value="'.$sortfield.'">';
 print '<input type="hidden" name="sortorder" value="'.$sortorder.'">';
 
+print '<div class="div-table-responsive-no-min">'."\n";
 print '<table class="tagtable nobottomiftotal liste">';
 
-print '<tr class="liste_titre_filter">';
-print '</tr>';
+//print '<tr class="liste_titre_filter">';
+//print '</tr>';
 
 print '<tr class="liste_titre">';
 print_liste_field_titre($arrayfields['nature']['label'], $_SERVER["PHP_SELF"], "nature", "", $param, "", $sortfield, $sortorder);
-print_liste_field_titre($arrayfields['thirdparty']['label'], $_SERVER["PHP_SELF"], "thirdparty", "", $param, "", $sortfield, $sortorder);
-print_liste_field_titre($arrayfields['contact']['label'], $_SERVER["PHP_SELF"], "contact", "", $param, "", $sortfield, $sortorder);
+print_liste_field_titre($arrayfields['thirdparty']['label'], $_SERVER["PHP_SELF"], "thirdparty_name", "", $param, "", $sortfield, $sortorder);
+print_liste_field_titre($arrayfields['contact']['label'], $_SERVER["PHP_SELF"], "contact_name", "", $param, "", $sortfield, $sortorder);
 print_liste_field_titre($arrayfields['type']['label'], $_SERVER["PHP_SELF"], "type", "", $param, "", $sortfield, $sortorder);
 print_liste_field_titre($arrayfields['status']['label'], $_SERVER["PHP_SELF"], "statut", "", $param, "", $sortfield, $sortorder, 'center ');
-print_liste_field_titre($arrayfields['link']['label'], $_SERVER["PHP_SELF"], "", "", "", "", $sortfield, $sortorder, 'center maxwidthsearch ');
+print_liste_field_titre('', $_SERVER["PHP_SELF"], "", "", "", "", $sortfield, $sortorder, 'center maxwidthsearch ');
 print "</tr>";
 
 foreach ($list as $entry)
@@ -293,17 +290,17 @@ foreach ($list as $entry)
 	print '<tr class="oddeven">';
 
 	print '<td class="nowrap">'.$entry->nature.'</td>';
-	print '<td class="tdoverflowmax200">'.$entry->thirdparty.'</td>';
-	print '<td class="tdoverflowmax200">'.$entry->contact.'</td>';
+	print '<td class="tdoverflowmax200">'.$entry->thirdparty_html.'</td>';
+	print '<td class="tdoverflowmax200">'.$entry->contact_html.'</td>';
 	print '<td class="tdoverflowmax200">'.$entry->type.'</td>';
 	print '<td class="tdoverflowmax200 center">'.$entry->status.'</td>';
 
 	if ($permission)
 	{
 		$href = $_SERVER["PHP_SELF"];
-		$href .= "?id=".$object->id;
-		$href .= "&action=deletecontact";
-		$href .= "&lineid=".$entry->id;
+		$href .= '?id='.$object->id;
+		$href .= '&action=deletecontact&token='.newToken();
+		$href .= '&lineid='.$entry->id;
 
 		print "<td class='center'>";
 		print "<a href='$href'>";
@@ -316,15 +313,14 @@ foreach ($list as $entry)
 }
 
 print "</table>";
-print "</div>";
+print '</div>';
+
 print "</form>";
-print "</div>";
 
 print "<!-- TEMPLATE CONTACTS HOOK BEGIN HERE -->\n";
 if (is_object($hookmanager)) {
-    $hookmanager->initHooks(array('contacttpl'));
-    $parameters = array();
-    $reshook = $hookmanager->executeHooks('formContactTpl', $parameters, $object, $action);
+	$hookmanager->initHooks(array('contacttpl'));
+	$parameters = array();
+	$reshook = $hookmanager->executeHooks('formContactTpl', $parameters, $object, $action);
 }
 print "<!-- END PHP TEMPLATE CONTACTS -->\n";
-

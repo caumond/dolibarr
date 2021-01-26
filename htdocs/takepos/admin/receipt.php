@@ -47,26 +47,26 @@ if (GETPOST('action', 'alpha') == 'set')
 	$res = dolibarr_set_const($db, "TAKEPOS_RECEIPT_NAME", GETPOST('TAKEPOS_RECEIPT_NAME', 'alpha'), 'chaine', 0, '', $conf->entity);
 	$res = dolibarr_set_const($db, "TAKEPOS_SHOW_CUSTOMER", GETPOST('TAKEPOS_SHOW_CUSTOMER', 'alpha'), 'chaine', 0, '', $conf->entity);
 	$res = dolibarr_set_const($db, "TAKEPOS_AUTO_PRINT_TICKETS", GETPOST('TAKEPOS_AUTO_PRINT_TICKETS', 'int'), 'int', 0, '', $conf->entity);
-    $res = dolibarr_set_const($db, "TAKEPOS_PRINT_SERVER", GETPOST('TAKEPOS_PRINT_SERVER', 'alpha'), 'chaine', 0, '', $conf->entity);
+	$res = dolibarr_set_const($db, "TAKEPOS_PRINT_SERVER", GETPOST('TAKEPOS_PRINT_SERVER', 'alpha'), 'chaine', 0, '', $conf->entity);
+	$res = dolibarr_set_const($db, "TAKEPOS_PRINT_PAYMENT_METHOD", GETPOST('TAKEPOS_PRINT_PAYMENT_METHOD', 'alpha'), 'chaine', 0, '', $conf->entity);
 
 	dol_syslog("admin/cashdesk: level ".GETPOST('level', 'alpha'));
 
-	if (!$res > 0) $error++;
+	if (!($res > 0)) $error++;
 
  	if (!$error)
-    {
-        $db->commit();
-	    setEventMessages($langs->trans("SetupSaved"), null, 'mesgs');
-    }
-    else
-    {
-        $db->rollback();
-	    setEventMessages($langs->trans("Error"), null, 'errors');
-    }
-}
-elseif (GETPOST('action', 'alpha') == 'setmethod')
+	{
+		$db->commit();
+		setEventMessages($langs->trans("SetupSaved"), null, 'mesgs');
+	} else {
+		$db->rollback();
+		setEventMessages($langs->trans("Error"), null, 'errors');
+	}
+} elseif (GETPOST('action', 'alpha') == 'setmethod')
 {
-    dolibarr_set_const($db, "TAKEPOS_PRINT_METHOD", GETPOST('value', 'alpha'), 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, "TAKEPOS_PRINT_METHOD", GETPOST('value', 'alpha'), 'chaine', 0, '', $conf->entity);
+	// TakePOS connector require ReceiptPrinter module
+	if ($conf->global->TAKEPOS_PRINT_METHOD == "takeposconnector" && !$conf->receiptprinter->enabled) activateModule("modReceiptPrinter");
 }
 
 
@@ -81,8 +81,8 @@ llxHeader('', $langs->trans("CashDeskSetup"));
 
 $linkback = '<a href="'.DOL_URL_ROOT.'/admin/modules.php">'.$langs->trans("BackToModuleList").'</a>';
 print load_fiche_titre($langs->trans("CashDeskSetup").' (TakePOS)', $linkback, 'title_setup');
-$head = takepos_prepare_head();
-dol_fiche_head($head, 'receipt', 'TakePOS', -1);
+$head = takepos_admin_prepare_head();
+print dol_get_fiche_head($head, 'receipt', 'TakePOS', -1, 'cash-register');
 
 print '<form action="'.$_SERVER["PHP_SELF"].'?terminal='.(empty($terminal) ? 1 : $terminal).'" method="post">';
 print '<input type="hidden" name="token" value="'.newToken().'">';
@@ -90,9 +90,10 @@ print '<input type="hidden" name="action" value="set">';
 
 print load_fiche_titre($langs->trans("PrintMethod"), '', '');
 
+print '<div class="div-table-responsive-no-min">';
 print '<table class="noborder centpercent">';
 print '<tr class="liste_titre">';
-print '<td>'.$langs->trans("Name").'</td><td>'.$langs->trans("Description").'</td><td class="center" width="60">'.$langs->trans("Status").'</td>';
+print '<td>'.$langs->trans("Name").'</td><td>'.$langs->trans("Description").'</td><td class="right">'.$langs->trans("Status").'</td>';
 print "</tr>\n";
 
 // Browser method
@@ -100,68 +101,78 @@ print '<tr class="oddeven"><td>';
 print $langs->trans('Browser');
 print '<td>';
 print $langs->trans('BrowserMethodDescription');
-print '</td><td class="center">';
+print '</td><td class="right">';
 if ($conf->global->TAKEPOS_PRINT_METHOD == "browser")
 {
-    print img_picto($langs->trans("Activated"), 'switch_on');
-}
-else
-{
-    print '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?action=setmethod&value=browser">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+	print img_picto($langs->trans("Activated"), 'switch_on');
+} else {
+	print '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?action=setmethod&token='.newToken().'&value=browser">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
 }
 print "</td></tr>\n";
 
 // Receipt printer module
+print '<tr class="oddeven"><td>';
+print $langs->trans('DolibarrReceiptPrinter');
+print '<td>';
+print $langs->trans('ReceiptPrinterMethodDescription');
+print '<br>';
+print '<a href="'.DOL_URL_ROOT.'/admin/receiptprinter.php">'.$langs->trans("Setup").'</a>';
+print '</td><td class="right">';
 if ($conf->receiptprinter->enabled) {
-	print '<tr class="oddeven"><td>';
-	print $langs->trans('DolibarrReceiptPrinter');
-	print '<td>';
-	print $langs->trans('ReceiptPrinterMethodDescription');
-	print '</td><td class="center">';
-	if ($conf->global->TAKEPOS_PRINT_METHOD == "receiptprinter")
-	{
+	if ($conf->global->TAKEPOS_PRINT_METHOD == "receiptprinter") {
 		print img_picto($langs->trans("Activated"), 'switch_on');
+	} else {
+		print '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?action=setmethod&token='.newToken().'&value=receiptprinter">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
 	}
-	else
-	{
-		print '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?action=setmethod&value=receiptprinter">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
-	}
-	print "</td></tr>\n";
+} else {
+	print '<span class="opacitymedium">';
+	print $langs->trans("ModuleReceiptPrinterMustBeEnabled");
+	print '</span>';
 }
+print "</td></tr>\n";
 
 // TakePOS Connector
 print '<tr class="oddeven"><td>';
 print "TakePOS Connector";
 print '<td>';
 print $langs->trans('TakeposConnectorMethodDescription');
-print '</td><td class="center">';
+print '</td><td class="right">';
 if ($conf->global->TAKEPOS_PRINT_METHOD == "takeposconnector")
 {
-    print img_picto($langs->trans("Activated"), 'switch_on');
-}
-else
-{
-    print '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?action=setmethod&value=takeposconnector">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
+	print img_picto($langs->trans("Activated"), 'switch_on');
+} else {
+	print '<a class="reposition" href="'.$_SERVER["PHP_SELF"].'?action=setmethod&token='.newToken().'&value=takeposconnector">'.img_picto($langs->trans("Disabled"), 'switch_off').'</a>';
 }
 print "</td></tr>\n";
 print '</table>';
+print '</div>';
+
 
 print load_fiche_titre($langs->trans("Setup"), '', '');
 
+print '<div class="div-table-responsive-no-min">';
 print '<table class="noborder centpercent">';
 print '<tr class="liste_titre">';
 print '<td>'.$langs->trans("Parameters").'</td><td>'.$langs->trans("Value").'</td>';
 print "</tr>\n";
 
-if ($conf->global->TAKEPOS_PRINT_METHOD == "takeposconnector"){
+// VAT Grouped on ticket
+print '<tr class="oddeven"><td>';
+print $langs->trans('TicketVatGrouped');
+print '<td colspan="2">';
+print ajax_constantonoff("TAKEPOS_TICKET_VAT_GROUPPED", array(), $conf->entity, 0, 0, 1, 0);
+//print $form->selectyesno("TAKEPOS_TICKET_VAT_GROUPPED", $conf->global->TAKEPOS_TICKET_VAT_GROUPPED, 1);
+print "</td></tr>\n";
+
+if ($conf->global->TAKEPOS_PRINT_METHOD == "takeposconnector") {
 	print '<tr class="oddeven value"><td>';
-	print $langs->trans("IPAddress").' (<a href="http://en.takepos.com/connector" target="_blank">'.$langs->trans("TakeposConnectorNecesary").'</a>)';
+	print $langs->trans("URL")." / ".$langs->trans("IPAddress").' (<a href="http://en.takepos.com/connector" target="_blank">'.$langs->trans("TakeposConnectorNecesary").'</a>)';
 	print '<td colspan="2">';
 	print '<input type="text" size="20" id="TAKEPOS_PRINT_SERVER" name="TAKEPOS_PRINT_SERVER" value="'.$conf->global->TAKEPOS_PRINT_SERVER.'">';
 	print '</td></tr>';
 }
 
-if ($conf->global->TAKEPOS_PRINT_METHOD == "browser" || $conf->global->TAKEPOS_PRINT_METHOD == "takeposconnector"){
+if ($conf->global->TAKEPOS_PRINT_METHOD == "browser" || $conf->global->TAKEPOS_PRINT_METHOD == "takeposconnector") {
 	$substitutionarray = pdf_getSubstitutionArray($langs, null, null, 2);
 	$substitutionarray['__(AnyTranslationKey)__'] = $langs->trans("Translation");
 	$htmltext = '<i>'.$langs->trans("AvailableVariables").':<br>';
@@ -175,9 +186,7 @@ if ($conf->global->TAKEPOS_PRINT_METHOD == "browser" || $conf->global->TAKEPOS_P
 	if (empty($conf->global->PDF_ALLOW_HTML_FOR_FREE_TEXT))
 	{
 		print '<textarea name="'.$variablename.'" class="flat" cols="120">'.$conf->global->$variablename.'</textarea>';
-	}
-	else
-	{
+	} else {
 		include_once DOL_DOCUMENT_ROOT.'/core/class/doleditor.class.php';
 		$doleditor = new DolEditor($variablename, $conf->global->$variablename, '', 80, 'dolibarr_notes');
 		print $doleditor->Create();
@@ -191,9 +200,7 @@ if ($conf->global->TAKEPOS_PRINT_METHOD == "browser" || $conf->global->TAKEPOS_P
 	if (empty($conf->global->PDF_ALLOW_HTML_FOR_FREE_TEXT))
 	{
 		print '<textarea name="'.$variablename.'" class="flat" cols="120">'.$conf->global->$variablename.'</textarea>';
-	}
-	else
-	{
+	} else {
 		include_once DOL_DOCUMENT_ROOT.'/core/class/doleditor.class.php';
 		$doleditor = new DolEditor($variablename, $conf->global->$variablename, '', 80, 'dolibarr_notes');
 		print $doleditor->Create();
@@ -210,6 +217,13 @@ if ($conf->global->TAKEPOS_PRINT_METHOD == "browser" || $conf->global->TAKEPOS_P
 	print '<td colspan="2">';
 	print $form->selectyesno("TAKEPOS_SHOW_CUSTOMER", $conf->global->TAKEPOS_SHOW_CUSTOMER, 1);
 	print "</td></tr>\n";
+
+	// Print payment method
+	print '<tr class="oddeven"><td>';
+	print $langs->trans('PrintPaymentMethodOnReceipts');
+	print '<td colspan="2">';
+	print $form->selectyesno("TAKEPOS_PRINT_PAYMENT_METHOD", $conf->global->TAKEPOS_PRINT_PAYMENT_METHOD, 1);
+	print "</td></tr>\n";
 }
 
 // Auto print tickets
@@ -219,11 +233,20 @@ print '<td colspan="2">';
 print $form->selectyesno("TAKEPOS_AUTO_PRINT_TICKETS", $conf->global->TAKEPOS_AUTO_PRINT_TICKETS, 1);
 print "</td></tr>\n";
 
+if ($conf->global->TAKEPOS_PRINT_METHOD == "takeposconnector" && filter_var($conf->global->TAKEPOS_PRINT_SERVER, FILTER_VALIDATE_URL) == true) {
+	print '<tr class="oddeven"><td>';
+	print $langs->trans('WeighingScale');
+	print '<td colspan="2">';
+	print ajax_constantonoff("TAKEPOS_WEIGHING_SCALE", array(), $conf->entity, 0, 0, 1, 0);
+	print "</td></tr>\n";
+}
+
 print '</table>';
+print '</div>';
 
 print '<br>';
 
-print '<div class="center"><input type="submit" class="button" value="'.$langs->trans("Save").'"></div>';
+print '<div class="center"><input type="submit" class="button button-save" value="'.$langs->trans("Save").'"></div>';
 
 print "</form>\n";
 
